@@ -1321,6 +1321,13 @@
 			
 		}
 
+    function getPointInBetweenByLen(pointA, pointB, length) {
+
+      var dir = pointB.clone().sub(pointA).normalize().multiplyScalar(length);
+      return pointA.clone().add(dir);
+
+    }
+
     function onDocumentMouseDown( event ) {
       var objects = [button]
 
@@ -1348,13 +1355,15 @@
 
 		var renderer = new THREE.WebGLRenderer(
 			{canvas: document.getElementById('myCanvas')});
-		renderer.setClearColor(0x224422);
+		renderer.setClearColor(0x564E58);
 		renderer.setSize(window.innerWidth, window.innerHeight);
 
     var raycaster = new THREE.Raycaster();
     var mouse = new THREE.Vector2();
 
 		var blocks = [];
+    var bullets = [];
+    var directions = [];
 
 		var camera = new THREE.PerspectiveCamera( 35, window.innerWidth / window.innerHeight, 0.1, 3000 );
 		var scene = new THREE.Scene();
@@ -1376,14 +1385,14 @@
 		var center = new THREE.Mesh(geometry, material);
 		center.position.set(0, 0,-1000);
 
-		// scene.add(center);
+		scene.add(center);
 
 		// for (var i =0; i <= 10; i++) {
 		// 	addMesh();
 		// }
     var rocketMat = new THREE.MeshPhongMaterial( { 
-        color: 0x8888ff, 
-        specular: 0x050505,
+        color: 0xB4DDD1, 
+        specular: 0xB4DDD1,
         shininess: 100
     } );
 		var rocket = new THREE.Mesh(geometry, rocketMat);
@@ -1394,10 +1403,20 @@
 
     button = new THREE.Mesh( 
       new THREE.CubeGeometry( 40, 40, 4 ), 
-      new THREE.MeshLambertMaterial( {color: 0x8888ff} ));
+      new THREE.MeshLambertMaterial( {color: 0xC0C4BB} ));
     button.position.set(-230, -230, -1000);
     button.callback = function () {
-      console.log("HEY!")
+      this.material.color.set(0xffeeff);
+      var bullet = new THREE.Mesh( 
+        new THREE.SphereGeometry( 20, 5, 5 ), 
+        new THREE.MeshLambertMaterial( {color: 0xC0A0B6} ));
+      bullet.position.set(rocket.position.x, rocket.position.y, -1000)
+      bullets.push(bullet);
+
+      // Find slope
+      var m = -bullet.position.y / -bullet.position.x
+      directions.push(m);
+      scene.add(bullet);
     }
     scene.add(button);
 
@@ -1409,7 +1428,7 @@
 
 		var a = 0;
 		var r = 220;
-		var da = 0.01;
+		var da = 0.01; 
 
 		requestAnimationFrame(render);
 		function render () {
@@ -1421,6 +1440,14 @@
 			rocket.position.x = r * Math.sin(a);
 			rocket.position.y = r * Math.cos(a);
 			rocket.lookAt(center.position);
+
+      // Move the bullets
+      for (var i in bullets) {
+        var bullet = bullets[i];
+        var np = getPointInBetweenByLen(bullet.position, center.position, 2);
+        bullet.position.x = np.x;
+        bullet.position.y = np.y;
+      }
 
 			// for (var i=1; i < scene.children.length; i++) {
 			// 	scene.children[i].rotation.x += 0.01;
